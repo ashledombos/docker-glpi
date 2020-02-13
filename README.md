@@ -1,2 +1,3 @@
 # docker-glpi
-Simple LEMP stack with necessary requirements for GLPI (not intended to provide GLPI by itself)
+Stack loading GLPI in a apache/php-fpm stack.
+The docker compose file includes a cronjobber.
