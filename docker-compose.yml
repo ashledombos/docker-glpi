@@ -1,0 +1,56 @@
+version: '3.5'
+#includes a cronjobber
+
+services:
+  web:
+    image: localhost:5000/glpi2web
+    container_name: glpiweb
+    depends_on:
+      - php
+    networks:
+      - web
+      - default
+    volumes:
+        - /home/manager/docker/glpi/data:/var/www/html/data
+        - glpi_core:/var/www/html/core
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.docker.network=web"
+      - "traefik.enable=true"
+      - "traefik.frontend.rule=Host:glpi.evrycourcouronnes.fr"
+  php:
+    image: localhost:5000/glpi2php
+    volumes:
+        - /home/manager/docker/glpi/data:/var/www/html/data
+        - glpi_core:/var/www/html/core
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+    container_name: glpiphp
+  mysql:
+    image: mariadb:10.3
+    volumes:
+      - /home/manager/docker/glpi/base:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=glpi
+      - MYSQL_USER=glpi
+      - MYSQL_PASSWORD=glpi
+      - MYSQL_ROOT_PASSWORD=NSteaneadpeNST!
+  adminer:
+    image: adminer
+    ports:
+      - 8880:8080
+  cronjobber:
+    image: docker:edge
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: cronjobber
+    command: >
+         sh -c "
+         echo '*/2 * * * * docker exec $$(docker ps -q -f name=GLPI_php) /usr/local/bin/php /var/www/html/core/front/cron.php' > /etc/crontabs/root
+         && crond -f"
+volumes:
+  glpi_core:
+networks:
+    web:
+        external: true
